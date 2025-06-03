@@ -83,13 +83,34 @@ def get_pdf_text(pdf_docs):
                 original_path = os.environ.get("PATH", "")
                 os.environ["PATH"] = "/usr/bin:" + original_path
                 
-                # Debugging: Print current PATH and list /usr/bin contents
-                st.write("Debug: PATH before convert_from_path:", os.environ.get("PATH"))
+                # Debugging: Check for pdfinfo in PATH and /usr/bin
+                pdfinfo_in_path = False
+                pdfinfo_in_usr_bin = False
+                pdfinfo_path = ""
+
                 try:
-                    st.write("Debug: Contents of /usr/bin (first 50):", os.listdir("/usr/bin")[:50])
+                    # Check if pdfinfo is in the PATH and executable
+                    for path_dir in os.environ.get("PATH", "").split(os.pathsep):
+                        pdfinfo_candidate = os.path.join(path_dir, "pdfinfo")
+                        if os.path.exists(pdfinfo_candidate) and os.access(pdfinfo_candidate, os.X_OK):
+                            pdfinfo_in_path = True
+                            pdfinfo_path = pdfinfo_candidate
+                            break
+                    st.write(f"Debug: pdfinfo found in PATH: {pdfinfo_in_path}")
+                    if pdfinfo_in_path:
+                        st.write(f"Debug: pdfinfo path: {pdfinfo_path}")
                 except Exception as e:
-                    st.write("Debug: Could not list /usr/bin contents:", str(e))
-                    
+                    st.write(f"Debug: Error checking for pdfinfo in PATH: {str(e)}")
+
+                try:
+                    # Check specifically for pdfinfo in /usr/bin
+                    usr_bin_pdfinfo = "/usr/bin/pdfinfo"
+                    if os.path.exists(usr_bin_pdfinfo) and os.access(usr_bin_pdfinfo, os.X_OK):
+                        pdfinfo_in_usr_bin = True
+                    st.write(f"Debug: pdfinfo found and executable in /usr/bin: {pdfinfo_in_usr_bin}")
+                except Exception as e:
+                    st.write(f"Debug: Error checking for pdfinfo in /usr/bin: {str(e)}")
+
                 try:
                     # Convert PDF to images
                     images = convert_from_path(tmp_file_path)
