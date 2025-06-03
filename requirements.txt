@@ -4,6 +4,7 @@ langchain==0.1.12
 langchain-google-genai==0.0.11
 google-generativeai>=0.4.1,<0.5.0
 python-dotenv==1.0.1
+poppler-utils 
 pytesseract
 pdf2image
 Pillow
