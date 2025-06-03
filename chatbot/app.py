@@ -40,12 +40,26 @@ except ImportError as e:
     st.stop()
 
 # Load API keys from Streamlit secrets
-load_dotenv() # Commented out
+# load_dotenv() # Commented out
 gemini_api_key = st.secrets["GOOGLE_API_KEY"]
 gorq_api_key = st.secrets["GORQ_API_KEY"]
 
-if not gemini_api_key or not gorq_api_key:
-    st.error("Please set both GOOGLE_API_KEY and GORQ_API_KEY in Streamlit secrets (`.streamlit/secrets.toml`).")
+# Add the Online OCR API key
+try:
+    online_ocr_api = st.secrets["ONLINE_OCR_API"]
+except KeyError:
+    online_ocr_api = None # Handle missing key
+
+if not gemini_api_key or not gorq_api_key or not online_ocr_api:
+    missing_keys = []
+    if not gemini_api_key:
+        missing_keys.append("GOOGLE_API_KEY")
+    if not gorq_api_key:
+        missing_keys.append("GORQ_API_KEY")
+    if not online_ocr_api:
+        missing_keys.append("ONLINE_OCR_API")
+        
+    st.error(f"Please set the following API keys in Streamlit secrets (`.streamlit/secrets.toml`): {', '.join(missing_keys)}")
     st.stop()
 
 genai.configure(api_key=gemini_api_key)
@@ -57,6 +71,60 @@ if 'vector_store' not in st.session_state:
     st.session_state.vector_store = None
 if 'selected_model' not in st.session_state:
     st.session_state.selected_model = "Gemini"
+
+# Placeholder function for Online OCR API
+def process_with_online_ocr(pdf_content, api_key):
+    """Sends PDF content to an online OCR API and returns extracted text.
+    
+    Args:
+        pdf_content: The content of the PDF file (bytes).
+        api_key: The API key for the online OCR service.
+        
+    Returns:
+        The extracted text as a string, or None if processing fails.
+        
+    **IMPORTANT:** You need to replace the placeholder logic below
+    with the actual implementation for your specific Online OCR API.
+    This includes the API endpoint URL, headers, request body format,
+    sending the request, and parsing the response.
+    """
+    st.warning("Using placeholder Online OCR API function. Please update with your API's details.")
+    
+    # --- Placeholder Logic --- 
+    api_url = "YOUR_ONLINE_OCR_API_ENDPOINT"
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}", # Adjust header format as needed
+        # Add other required headers (e.g., Content-Type)
+    }
+    
+    # Prepare the request body - this depends heavily on your API
+    # Some APIs take file content directly, others might require base64 encoding
+    # or a file upload field.
+    files = {'file': pdf_content} # Example for an API that accepts file upload
+    # data = {'key': 'value'} # Example for sending data in the body
+    
+    try:
+        response = requests.post(api_url, headers=headers, files=files, timeout=60) # Adjust as needed
+        response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+        
+        response_data = response.json() # Adjust based on your API's response format
+        
+        # --- Parse the response and extract text --- 
+        # This part is highly dependent on your API's response structure.
+        # Example: if the API returns {'text': 'extracted text'}
+        extracted_text = response_data.get('text', '') # Adjust key as needed
+        # --- End of Response Parsing --- 
+        
+        return extracted_text
+        
+    except requests.exceptions.RequestException as e:
+        st.error(f"Online OCR API request failed: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"An error occurred during Online OCR processing: {str(e)}")
+        return None
+    # --- End of Placeholder Logic --- 
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -78,51 +146,17 @@ def get_pdf_text(pdf_docs):
             
             # If no text was extracted, the PDF might be scanned
             if not page_text.strip():
-                # Add /usr/bin to PATH for pdf2image on Streamlit Cloud
-                # This is a common location for poppler-utils binaries
-                original_path = os.environ.get("PATH", "")
-                os.environ["PATH"] = "/usr/bin:" + original_path
-                
-                # Debugging: Check for pdfinfo in PATH and /usr/bin
-                pdfinfo_in_path = False
-                pdfinfo_in_usr_bin = False
-                pdfinfo_path = ""
-
-                try:
-                    # Check if pdfinfo is in the PATH and executable
-                    for path_dir in os.environ.get("PATH", "").split(os.pathsep):
-                        pdfinfo_candidate = os.path.join(path_dir, "pdfinfo")
-                        if os.path.exists(pdfinfo_candidate) and os.access(pdfinfo_candidate, os.X_OK):
-                            pdfinfo_in_path = True
-                            pdfinfo_path = pdfinfo_candidate
-                            break
-                    st.write(f"Debug: pdfinfo found in PATH: {pdfinfo_in_path}")
-                    if pdfinfo_in_path:
-                        st.write(f"Debug: pdfinfo path: {pdfinfo_path}")
-                except Exception as e:
-                    st.write(f"Debug: Error checking for pdfinfo in PATH: {str(e)}")
-
-                try:
-                    # Check specifically for pdfinfo in /usr/bin
-                    usr_bin_pdfinfo = "/usr/bin/pdfinfo"
-                    if os.path.exists(usr_bin_pdfinfo) and os.access(usr_bin_pdfinfo, os.X_OK):
-                        pdfinfo_in_usr_bin = True
-                    st.write(f"Debug: pdfinfo found and executable in /usr/bin: {pdfinfo_in_usr_bin}")
-                except Exception as e:
-                    st.write(f"Debug: Error checking for pdfinfo in /usr/bin: {str(e)}")
-
-                try:
-                    # Convert PDF to images
-                    images = convert_from_path(tmp_file_path)
-                finally:
-                    # Restore original PATH
-                    os.environ["PATH"] = original_path
-                    
-                # Perform OCR on each page
-                for image in images:
-                    page_text += pytesseract.image_to_string(image)
-            
-            text += page_text
+                st.info("No text extracted, attempting OCR...")
+                # Use Online OCR API for scanned PDFs
+                with open(tmp_file_path, 'rb') as f:
+                    pdf_bytes = f.read()
+                ocr_text = process_with_online_ocr(pdf_bytes, online_ocr_api)
+                if ocr_text:
+                    text += ocr_text
+                else:
+                    st.warning("Online OCR processing failed.")
+            else:
+                 text += page_text
 
         except Exception as e:
             st.error(f"Error processing PDF: {str(e)}")
