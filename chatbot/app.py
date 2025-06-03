@@ -78,8 +78,18 @@ def get_pdf_text(pdf_docs):
             
             # If no text was extracted, the PDF might be scanned
             if not page_text.strip():
-                # Convert PDF to images
-                images = convert_from_path(tmp_file_path)
+                # Add /usr/bin to PATH for pdf2image on Streamlit Cloud
+                # This is a common location for poppler-utils binaries
+                original_path = os.environ.get("PATH", "")
+                os.environ["PATH"] = "/usr/bin:" + original_path
+                
+                try:
+                    # Convert PDF to images
+                    images = convert_from_path(tmp_file_path)
+                finally:
+                    # Restore original PATH
+                    os.environ["PATH"] = original_path
+                    
                 # Perform OCR on each page
                 for image in images:
                     page_text += pytesseract.image_to_string(image)
