@@ -39,12 +39,8 @@ except ImportError as e:
     st.error("Please make sure pytesseract is installed correctly.")
     st.stop()
 
-# Define the path to the poppler binaries (needed for pdf2image)
-# ** IMPORTANT: Update this path if your poppler installation is elsewhere **
-POPPLER_PATH = '/opt/homebrew/bin'
-
 # Load API keys from Streamlit secrets
-# load_dotenv() # Commented out
+load_dotenv() # Commented out
 gemini_api_key = st.secrets["GOOGLE_API_KEY"]
 gorq_api_key = st.secrets["GORQ_API_KEY"]
 
@@ -83,7 +79,7 @@ def get_pdf_text(pdf_docs):
             # If no text was extracted, the PDF might be scanned
             if not page_text.strip():
                 # Convert PDF to images
-                images = convert_from_path(tmp_file_path, poppler_path=POPPLER_PATH)
+                images = convert_from_path(tmp_file_path)
                 # Perform OCR on each page
                 for image in images:
                     page_text += pytesseract.image_to_string(image)
