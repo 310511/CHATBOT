@@ -6,4 +6,5 @@ google-generativeai>=0.4.1,<0.5.0
 python-dotenv==1.0.1
 pytesseract
 pdf2image
-Pillow 
+Pillow
+dnspython 
