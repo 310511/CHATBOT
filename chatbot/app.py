@@ -83,6 +83,13 @@ def get_pdf_text(pdf_docs):
                 original_path = os.environ.get("PATH", "")
                 os.environ["PATH"] = "/usr/bin:" + original_path
                 
+                # Debugging: Print current PATH and list /usr/bin contents
+                st.write("Debug: PATH before convert_from_path:", os.environ.get("PATH"))
+                try:
+                    st.write("Debug: Contents of /usr/bin (first 50):", os.listdir("/usr/bin")[:50])
+                except Exception as e:
+                    st.write("Debug: Could not list /usr/bin contents:", str(e))
+                    
                 try:
                     # Convert PDF to images
                     images = convert_from_path(tmp_file_path)
