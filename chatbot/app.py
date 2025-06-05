@@ -5,7 +5,6 @@ import os
 import sys
 import tempfile
 from dotenv import load_dotenv
-import socket
 import dns.resolver
 import requests
 from requests.adapters import HTTPAdapter
@@ -67,19 +66,52 @@ if 'selected_model' not in st.session_state:
     st.session_state.selected_model = "Gemini"
 
 def process_with_online_ocr(pdf_content, api_key):
-    """Placeholder for integrating an external OCR API."""
-    st.warning("Using placeholder Online OCR API function. Please update with your API's details.")
-    api_url = "YOUR_ONLINE_OCR_API_ENDPOINT"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    files = {'file': pdf_content}
-
+    """Process PDF content using the configured OCR API."""
+    if not api_key:
+        st.error("OCR API key is not configured")
+        return None
+        
+    # Replace this URL with your actual OCR API endpoint
+    api_url = "https://api.ocr.space/parse/image"  # Example using OCR.space API
+    
     try:
-        response = requests.post(api_url, headers=headers, files=files, timeout=60)
+        # For OCR.space API
+        payload = {
+            'apikey': api_key,
+            'language': 'eng',
+            'isOverlayRequired': 'false',
+            'OCREngine': '2'
+        }
+        
+        files = {
+            'file': ('document.pdf', pdf_content, 'application/pdf')
+        }
+        
+        response = requests.post(
+            api_url,
+            files=files,
+            data=payload,
+            timeout=60
+        )
         response.raise_for_status()
-        response_data = response.json()
-        return response_data.get('text', '')
+        
+        result = response.json()
+        if result.get('IsErroredOnProcessing'):
+            st.error(f"OCR API Error: {result.get('ErrorMessage')}")
+            return None
+            
+        # Extract text from all pages
+        extracted_text = ""
+        for parsed_result in result.get('ParsedResults', []):
+            extracted_text += parsed_result.get('ParsedText', '') + "\n"
+            
+        return extracted_text.strip()
+        
+    except requests.exceptions.RequestException as e:
+        st.error(f"OCR API request failed: {str(e)}")
+        return None
     except Exception as e:
-        st.error(f"Online OCR processing failed: {str(e)}")
+        st.error(f"Unexpected error during OCR processing: {str(e)}")
         return None
 
 def get_pdf_text(pdf_docs):
