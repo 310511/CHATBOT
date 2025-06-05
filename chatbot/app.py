@@ -75,6 +75,15 @@ def process_with_online_ocr(pdf_content, api_key):
     api_url = "https://api.ocr.space/parse/image"  # Example using OCR.space API
     
     try:
+        # Set up retry mechanism for better reliability
+        session = requests.Session()
+        retries = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504]
+        )
+        session.mount('https://', HTTPAdapter(max_retries=retries))
+        
         # For OCR.space API
         payload = {
             'apikey': api_key,
@@ -87,7 +96,7 @@ def process_with_online_ocr(pdf_content, api_key):
             'file': ('document.pdf', pdf_content, 'application/pdf')
         }
         
-        response = requests.post(
+        response = session.post(
             api_url,
             files=files,
             data=payload,
