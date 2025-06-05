@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 from dotenv import load_dotenv
+load_dotenv()
 import dns.resolver
 import requests
 from requests.adapters import HTTPAdapter
@@ -36,11 +37,11 @@ except ImportError as e:
     st.stop()
 
 # Load API keys
-gemini_api_key = st.secrets["GOOGLE_API_KEY"]
-gorq_api_key = st.secrets["GORQ_API_KEY"]
+gemini_api_key = os.getenv("GOOGLE_API_KEY")
+gorq_api_key = os.getenv("GORQ_API_KEY")
 
 try:
-    online_ocr_api = st.secrets["ONLINE_OCR_API"]
+    online_ocr_api = os.getenv("ONLINE_OCR_API")
 except KeyError:
     online_ocr_api = None
 
@@ -64,6 +65,8 @@ if 'vector_store' not in st.session_state:
     st.session_state.vector_store = None
 if 'selected_model' not in st.session_state:
     st.session_state.selected_model = "Gemini"
+
+load_dotenv()
 
 def process_with_online_ocr(pdf_content, api_key):
     """Process PDF content using the configured OCR API."""
