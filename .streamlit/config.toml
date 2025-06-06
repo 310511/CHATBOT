@@ -2,6 +2,7 @@
 headless = true
 enableCORS = false
 enableXsrfProtection = false
+mainModule = "app.py"
 
 [theme]
 primaryColor = "#FF4B4B"
