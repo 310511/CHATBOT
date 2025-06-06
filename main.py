@@ -252,48 +252,48 @@ def process_user_input(user_question):
     else:
         return process_with_gorq(user_question, context)
 
-def main():
-    st.header("Chat with PDF using AI\U0001F481")
+# Main application code
+st.header("Chat with PDF using AI\U0001F481")
 
-    with st.sidebar:
-        st.title("Menu:")
-        st.write("\U0001F4DA Drag and drop files here (Max 10, 200MB each)")
+with st.sidebar:
+    st.title("Menu:")
+    st.write("\U0001F4DA Drag and drop files here (Max 10, 200MB each)")
 
-        st.session_state.selected_model = st.radio(
-            "Select AI Model:",
-            ["Gemini", "Gorq"],
-            index=0 if st.session_state.selected_model == "Gemini" else 1
-        )
+    st.session_state.selected_model = st.radio(
+        "Select AI Model:",
+        ["Gemini", "Gorq"],
+        index=0 if st.session_state.selected_model == "Gemini" else 1
+    )
 
-        pdf_docs = st.file_uploader("Select your PDF files", accept_multiple_files=True)
-        if pdf_docs:
-            st.write(f"\U0001F4C4 Files selected: {len(pdf_docs)}/10")
+    pdf_docs = st.file_uploader("Select your PDF files", accept_multiple_files=True)
+    if pdf_docs:
+        st.write(f"\U0001F4C4 Files selected: {len(pdf_docs)}/10")
 
-        if pdf_docs and len(pdf_docs) > 10:
-            st.error("Maximum 10 PDF files allowed.")
-        elif st.button("Submit & Process"):
-            if not pdf_docs:
-                st.warning("Please upload at least one PDF.")
-            else:
-                with st.spinner("Processing..."):
-                    raw_text = get_pdf_text(pdf_docs)
-                    if not raw_text.strip():
-                        st.error("No extractable text found in uploaded PDFs.")
-                        return
+    if pdf_docs and len(pdf_docs) > 10:
+        st.error("Maximum 10 PDF files allowed.")
+    elif st.button("Submit & Process"):
+        if not pdf_docs:
+            st.warning("Please upload at least one PDF.")
+        else:
+            with st.spinner("Processing..."):
+                raw_text = get_pdf_text(pdf_docs)
+                if not raw_text.strip():
+                    st.error("No extractable text found in uploaded PDFs.")
+                else:
                     text_chunks = get_text_chunks(raw_text)
                     get_vector_store(text_chunks)
                     st.success("Processing complete.")
                     st.session_state.chat_history = []
 
-    for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
 
-    if prompt := st.chat_input(f"Ask a question about your PDF (using {st.session_state.selected_model})"):
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        with st.chat_message("assistant"):
-            response = process_user_input(prompt)
-            st.write(response)
-            st.session_state.chat_history.append({"role": "assistant", "content": response}) 
+if prompt := st.chat_input(f"Ask a question about your PDF (using {st.session_state.selected_model})"):
+    st.session_state.chat_history.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+    with st.chat_message("assistant"):
+        response = process_user_input(prompt)
+        st.write(response)
+        st.session_state.chat_history.append({"role": "assistant", "content": response}) 
