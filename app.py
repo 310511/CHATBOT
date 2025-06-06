@@ -199,10 +199,12 @@ def get_conversational_chain():
     1. Using the information from the provided context
     2. Using your pre-trained knowledge to provide detailed explanations
 
-    Always start your answer with one of these:
-    - "Based on the provided context:" (if using only context)
-    - "Based on my pre-trained knowledge:" (if using your knowledge)
-    - "Combining context and knowledge:" (if using both)
+    For basic questions about what's in the context, use "Based on the provided context:"
+    For detailed explanations of concepts, use "Based on my pre-trained knowledge:"
+    If using both, use "Combining context and knowledge:"
+
+    IMPORTANT: When asked to explain concepts (like mean, median, mode, etc.), 
+    ALWAYS use your pre-trained knowledge to provide detailed explanations.
 
     If the answer is not available in either, respond with: "Answer is not available."
 
@@ -237,7 +239,7 @@ def process_with_gorq(question, context):
     data = {
         "model": "gemma2-9b-it",
         "messages": [
-            {"role": "system", "content": "You are a helpful AI assistant that can answer questions in two ways: 1. Using the information from the provided context 2. Using your pre-trained knowledge to provide detailed explanations. Always start your answer with one of these: - 'Based on the provided context:' (if using only context) - 'Based on my pre-trained knowledge:' (if using your knowledge) - 'Combining context and knowledge:' (if using both). If the answer is not available in either, respond with: 'Answer is not available.'"},
+            {"role": "system", "content": "You are a helpful AI assistant that can answer questions in two ways: 1. Using the information from the provided context 2. Using your pre-trained knowledge to provide detailed explanations. For basic questions about what's in the context, use 'Based on the provided context:'. For detailed explanations of concepts, use 'Based on my pre-trained knowledge:'. If using both, use 'Combining context and knowledge:'. IMPORTANT: When asked to explain concepts (like mean, median, mode, etc.), ALWAYS use your pre-trained knowledge to provide detailed explanations. If the answer is not available in either, respond with: 'Answer is not available.'"},
             {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
         ],
         "temperature": 0.7,
