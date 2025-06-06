@@ -196,11 +196,14 @@ def get_vector_store(text_chunks):
 def get_conversational_chain():
     prompt_template = """
     You are a helpful AI assistant that can answer questions in two ways:
-    1. Using ONLY the information from the provided context
-    2. Using your pre-trained knowledge if the answer is not in the context
+    1. Using the information from the provided context
+    2. Using your pre-trained knowledge to provide detailed explanations
 
-    If you use pre-trained knowledge, start your answer with: "Based on my pre-trained knowledge:"
-    If you use context, start your answer with: "Based on the provided context:"
+    Always start your answer with one of these:
+    - "Based on the provided context:" (if using only context)
+    - "Based on my pre-trained knowledge:" (if using your knowledge)
+    - "Combining context and knowledge:" (if using both)
+
     If the answer is not available in either, respond with: "Answer is not available."
 
     Context:
@@ -234,7 +237,7 @@ def process_with_gorq(question, context):
     data = {
         "model": "gemma2-9b-it",
         "messages": [
-            {"role": "system", "content": "You are a helpful AI assistant that can answer questions in two ways: 1. Using ONLY the information from the provided context 2. Using your pre-trained knowledge if the answer is not in the context. If you use pre-trained knowledge, start your answer with: 'Based on my pre-trained knowledge:' If you use context, start your answer with: 'Based on the provided context:' If the answer is not available in either, respond with: 'Answer is not available.'"},
+            {"role": "system", "content": "You are a helpful AI assistant that can answer questions in two ways: 1. Using the information from the provided context 2. Using your pre-trained knowledge to provide detailed explanations. Always start your answer with one of these: - 'Based on the provided context:' (if using only context) - 'Based on my pre-trained knowledge:' (if using your knowledge) - 'Combining context and knowledge:' (if using both). If the answer is not available in either, respond with: 'Answer is not available.'"},
             {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
         ],
         "temperature": 0.7,
