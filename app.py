@@ -22,14 +22,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 
-# OCR libraries
-try:
-    import pdf2image
-    from pdf2image import convert_from_path
-except ImportError as e:
-    st.error(f"Failed to import pdf2image: {str(e)}")
-    st.stop()
-
 try:
     import pytesseract
     # Try to find tesseract in common locations
