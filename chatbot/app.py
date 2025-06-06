@@ -5,7 +5,8 @@ import os
 import sys
 import tempfile
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv()  # Load environment variables
+
 import dns.resolver
 import requests
 from requests.adapters import HTTPAdapter
@@ -31,7 +32,23 @@ except ImportError as e:
 
 try:
     import pytesseract
-    pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+    # Try to find tesseract in common locations
+    tesseract_paths = [
+        '/opt/homebrew/bin/tesseract',  # Homebrew on Apple Silicon
+        '/usr/local/bin/tesseract',     # Homebrew on Intel
+        '/usr/bin/tesseract'            # System default
+    ]
+    
+    tesseract_found = False
+    for path in tesseract_paths:
+        if os.path.exists(path):
+            pytesseract.pytesseract.tesseract_cmd = path
+            tesseract_found = True
+            break
+    
+    if not tesseract_found:
+        st.error("Tesseract not found. Please install it using: brew install tesseract")
+        st.stop()
 except ImportError as e:
     st.error(f"Failed to import pytesseract: {str(e)}")
     st.stop()
@@ -65,8 +82,6 @@ if 'vector_store' not in st.session_state:
     st.session_state.vector_store = None
 if 'selected_model' not in st.session_state:
     st.session_state.selected_model = "Gemini"
-
-load_dotenv()
 
 def process_with_online_ocr(pdf_content, api_key):
     """Process PDF content using the configured OCR API."""
