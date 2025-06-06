@@ -76,21 +76,17 @@ if 'selected_model' not in st.session_state:
 def process_with_pytesseract(pdf_path):
     """Process PDF content using pytesseract OCR."""
     try:
-        st.info("Starting pytesseract OCR processing...")
         # Convert PDF to images
         images = pdf2image.convert_from_path(pdf_path)
         
         # Process each page with pytesseract
         extracted_text = ""
         for i, image in enumerate(images):
-            st.info(f"Processing page {i+1} with pytesseract...")
             text = pytesseract.image_to_string(image)
             extracted_text += text + "\n"
             
         if extracted_text.strip():
-            st.success("Successfully extracted text using pytesseract!")
-        else:
-            st.warning("Pytesseract couldn't extract any text.")
+            st.info("Text extracted using pytesseract")
         return extracted_text.strip()
     except Exception as e:
         st.error(f"Pytesseract processing failed: {str(e)}")
@@ -102,7 +98,6 @@ def process_with_online_ocr(pdf_content, api_key):
         st.error("OCR API key is not configured")
         return None
         
-    st.info("Starting online OCR API processing...")
     # Replace this URL with your actual OCR API endpoint
     api_url = "https://api.ocr.space/parse/image"  # Example using OCR.space API
     
@@ -147,9 +142,7 @@ def process_with_online_ocr(pdf_content, api_key):
             extracted_text += parsed_result.get('ParsedText', '') + "\n"
             
         if extracted_text.strip():
-            st.success("Successfully extracted text using online OCR API!")
-        else:
-            st.warning("Online OCR API couldn't extract any text.")
+            st.info("Text extracted using OCR API")
         return extracted_text.strip()
         
     except requests.exceptions.RequestException as e:
@@ -168,26 +161,21 @@ def get_pdf_text(pdf_docs):
 
         try:
             # First try to extract text directly from PDF
-            st.info("Attempting direct text extraction from PDF...")
             pdf_reader = PdfReader(tmp_file_path)
             page_text = "".join(page.extract_text() or "" for page in pdf_reader.pages)
 
             if not page_text.strip():
-                st.info("No text extracted directly, attempting OCR...")
-                
                 # Try pytesseract first
                 ocr_text = process_with_pytesseract(tmp_file_path)
                 
                 # If pytesseract fails, fall back to online OCR
                 if not ocr_text:
-                    st.info("Pytesseract failed, falling back to online OCR...")
                     with open(tmp_file_path, 'rb') as f:
                         pdf_bytes = f.read()
                     ocr_text = process_with_online_ocr(pdf_bytes, online_ocr_api)
                 
                 text += ocr_text or ""
             else:
-                st.success("Successfully extracted text directly from PDF!")
                 text += page_text
 
         except Exception as e:
