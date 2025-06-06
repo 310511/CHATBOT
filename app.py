@@ -21,28 +21,26 @@ from langchain_community.vectorstores import InMemoryVectorStore
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
+import pdf2image
+import pytesseract
+from PIL import Image
 
-try:
-    import pytesseract
-    # Try to find tesseract in common locations
-    tesseract_paths = [
-        '/opt/homebrew/bin/tesseract',  # Homebrew on Apple Silicon
-        '/usr/local/bin/tesseract',     # Homebrew on Intel
-        '/usr/bin/tesseract'            # System default
-    ]
-    
-    tesseract_found = False
-    for path in tesseract_paths:
-        if os.path.exists(path):
-            pytesseract.pytesseract.tesseract_cmd = path
-            tesseract_found = True
-            break
-    
-    if not tesseract_found:
-        st.error("Tesseract not found. Please install it using: brew install tesseract")
-        st.stop()
-except ImportError as e:
-    st.error(f"Failed to import pytesseract: {str(e)}")
+# Try to find tesseract in common locations
+tesseract_paths = [
+    '/opt/homebrew/bin/tesseract',  # Homebrew on Apple Silicon
+    '/usr/local/bin/tesseract',     # Homebrew on Intel
+    '/usr/bin/tesseract'            # System default
+]
+
+tesseract_found = False
+for path in tesseract_paths:
+    if os.path.exists(path):
+        pytesseract.pytesseract.tesseract_cmd = path
+        tesseract_found = True
+        break
+
+if not tesseract_found:
+    st.error("Tesseract not found. Please install it using: brew install tesseract")
     st.stop()
 
 # Load API keys
@@ -74,6 +72,24 @@ if 'vector_store' not in st.session_state:
     st.session_state.vector_store = None
 if 'selected_model' not in st.session_state:
     st.session_state.selected_model = "Gemini"
+
+def process_with_pytesseract(pdf_path):
+    """Process PDF content using pytesseract OCR."""
+    try:
+        # Convert PDF to images
+        images = pdf2image.convert_from_path(pdf_path)
+        
+        # Process each page with pytesseract
+        extracted_text = ""
+        for i, image in enumerate(images):
+            st.info(f"Processing page {i+1} with pytesseract...")
+            text = pytesseract.image_to_string(image)
+            extracted_text += text + "\n"
+            
+        return extracted_text.strip()
+    except Exception as e:
+        st.error(f"Pytesseract processing failed: {str(e)}")
+        return None
 
 def process_with_online_ocr(pdf_content, api_key):
     """Process PDF content using the configured OCR API."""
@@ -141,14 +157,23 @@ def get_pdf_text(pdf_docs):
             tmp_file_path = tmp_file.name
 
         try:
+            # First try to extract text directly from PDF
             pdf_reader = PdfReader(tmp_file_path)
             page_text = "".join(page.extract_text() or "" for page in pdf_reader.pages)
 
             if not page_text.strip():
                 st.info("No text extracted, attempting OCR...")
-                with open(tmp_file_path, 'rb') as f:
-                    pdf_bytes = f.read()
-                ocr_text = process_with_online_ocr(pdf_bytes, online_ocr_api)
+                
+                # Try pytesseract first
+                ocr_text = process_with_pytesseract(tmp_file_path)
+                
+                # If pytesseract fails, fall back to online OCR
+                if not ocr_text:
+                    st.info("Pytesseract failed, falling back to online OCR...")
+                    with open(tmp_file_path, 'rb') as f:
+                        pdf_bytes = f.read()
+                    ocr_text = process_with_online_ocr(pdf_bytes, online_ocr_api)
+                
                 text += ocr_text or ""
             else:
                 text += page_text
