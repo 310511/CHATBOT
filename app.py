@@ -195,18 +195,10 @@ def get_vector_store(text_chunks):
 
 def get_conversational_chain():
     prompt_template = """
-    You are a helpful AI assistant that can answer questions in two ways:
-    1. Using the information from the provided context
-    2. Using your pre-trained knowledge to provide detailed explanations
+    You are a helpful AI assistant that can ONLY answer questions using the information from the provided context.
+    Do NOT use any pre-trained knowledge or external information.
 
-    For basic questions about what's in the context, use "Based on the provided context:"
-    For detailed explanations of concepts, use "Based on my pre-trained knowledge:"
-    If using both, use "Combining context and knowledge:"
-
-    IMPORTANT: When asked to explain concepts (like mean, median, mode, etc.), 
-    ALWAYS use your pre-trained knowledge to provide detailed explanations.
-
-    If the answer is not available in either, respond with: "Answer is not available."
+    If the answer is not available in the provided context, respond with: "This information is not available in the provided documents."
 
     Context:
     {context}
@@ -239,7 +231,7 @@ def process_with_gorq(question, context):
     data = {
         "model": "gemma2-9b-it",
         "messages": [
-            {"role": "system", "content": "You are a helpful AI assistant that can answer questions in two ways: 1. Using the information from the provided context 2. Using your pre-trained knowledge to provide detailed explanations. For basic questions about what's in the context, use 'Based on the provided context:'. For detailed explanations of concepts, use 'Based on my pre-trained knowledge:'. If using both, use 'Combining context and knowledge:'. IMPORTANT: When asked to explain concepts (like mean, median, mode, etc.), ALWAYS use your pre-trained knowledge to provide detailed explanations. If the answer is not available in either, respond with: 'Answer is not available.'"},
+            {"role": "system", "content": "You are a helpful AI assistant that can ONLY answer questions using the information from the provided context. Do NOT use any pre-trained knowledge or external information. If the answer is not available in the provided context, respond with: 'This information is not available in the provided documents.'"},
             {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
         ],
         "temperature": 0.7,
