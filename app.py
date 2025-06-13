@@ -11,6 +11,7 @@ import dns.resolver
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import time
 
 # PDF and text processing
 from PyPDF2 import PdfReader
@@ -75,6 +76,7 @@ if 'selected_model' not in st.session_state:
 
 def process_with_pytesseract(pdf_path):
     """Process PDF content using pytesseract OCR."""
+    start_time = time.time()
     try:
         # Convert PDF to images
         images = pdf2image.convert_from_path(pdf_path)
@@ -86,7 +88,7 @@ def process_with_pytesseract(pdf_path):
             extracted_text += text + "\n"
             
         if extracted_text.strip():
-            st.info("Text extracted using pytesseract")
+            st.info(f"Text extracted using pytesseract (Time: {time.time() - start_time:.2f}s)")
         return extracted_text.strip()
     except Exception as e:
         st.error(f"Pytesseract processing failed: {str(e)}")
@@ -94,6 +96,7 @@ def process_with_pytesseract(pdf_path):
 
 def process_with_online_ocr(pdf_content, api_key):
     """Process PDF content using the configured OCR API."""
+    start_time = time.time()
     if not api_key:
         st.error("OCR API key is not configured")
         return None
@@ -142,7 +145,7 @@ def process_with_online_ocr(pdf_content, api_key):
             extracted_text += parsed_result.get('ParsedText', '') + "\n"
             
         if extracted_text.strip():
-            st.info("Text extracted using OCR API")
+            st.info(f"Text extracted using OCR API (Time: {time.time() - start_time:.2f}s)")
         return extracted_text.strip()
         
     except requests.exceptions.RequestException as e:
@@ -162,7 +165,10 @@ def get_pdf_text(pdf_docs):
         try:
             # First try to extract text directly from PDF
             pdf_reader = PdfReader(tmp_file_path)
+            direct_extract_start_time = time.time()
             page_text = "".join(page.extract_text() or "" for page in pdf_reader.pages)
+            if page_text.strip():
+                st.info(f"Text extracted directly from PDF (Time: {time.time() - direct_extract_start_time:.2f}s)")
 
             if not page_text.strip():
                 # Try pytesseract first
