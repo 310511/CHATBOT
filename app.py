@@ -46,19 +46,19 @@ if not tesseract_found:
 
 # Load API keys
 gemini_api_key = os.getenv("GOOGLE_API_KEY")
-gorq_api_key = os.getenv("GORQ_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
 
 try:
     online_ocr_api = os.getenv("ONLINE_OCR_API")
 except KeyError:
     online_ocr_api = None
 
-if not gemini_api_key or not gorq_api_key or not online_ocr_api:
+if not gemini_api_key or not groq_api_key or not online_ocr_api:
     missing_keys = []
     if not gemini_api_key:
         missing_keys.append("GOOGLE_API_KEY")
-    if not gorq_api_key:
-        missing_keys.append("GORQ_API_KEY")
+    if not groq_api_key:
+        missing_keys.append("GROQ_API_KEY")
     if not online_ocr_api:
         missing_keys.append("ONLINE_OCR_API")
     st.error(f"Missing API keys in Streamlit secrets: {', '.join(missing_keys)}")
@@ -226,11 +226,11 @@ def resolve_domain(domain):
         st.error(f"DNS resolution failed: {str(e)}")
         return None
 
-def process_with_gorq(question, context):
+def process_with_groq(question, context):
     """Handles interaction with Groq API."""
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {gorq_api_key}",
+        "Authorization": f"Bearer {groq_api_key}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
@@ -283,7 +283,7 @@ def process_user_input(user_question):
         response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
         return response["output_text"]
     else:
-        return process_with_gorq(user_question, context)
+        return process_with_groq(user_question, context)
 
 # Main application code
 st.header("Chat with PDF using AI\U0001F481")
@@ -294,7 +294,7 @@ with st.sidebar:
 
     st.session_state.selected_model = st.radio(
         "Select AI Model:",
-        ["Gemini", "Gorq"],
+        ["Gemini", "Groq"],
         index=0 if st.session_state.selected_model == "Gemini" else 1
     )
 
